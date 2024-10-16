@@ -26,7 +26,7 @@ jobs:
     - name: install dependencies
       run: sudo apt-get update && sudo apt-get install -y libgtest-dev ${{ matrix.cxx }}
     - name: checkout gsl
-      run: [ ${{ matrix.gsl }} = "yes" ] && mkdir -p external && git clone https://github.com/gsl-lite/gsl-lite.git  external/gsl-lite
+      run: test ${{ matrix.gsl }} = "yes" && mkdir -p external && git clone https://github.com/gsl-lite/gsl-lite.git  external/gsl-lite
     - name: build tests
       run: make -C test -j$(nproc) CXX=${{ matrix.cxx }} STD=${{ matrix.std }}  
     - name: run tests
