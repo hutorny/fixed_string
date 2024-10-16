@@ -13,7 +13,7 @@ jobs:
       matrix:
         std: [c++20]
         cxx: [g++-11, g++-12, clang++-14, clang++-15]
-        gsl: [yes, no]
+        gsl: [gsl, nogsl]
         include:
           - std: c++2b
             cxx: clang++-14
@@ -26,7 +26,8 @@ jobs:
     - name: install dependencies
       run: sudo apt-get update && sudo apt-get install -y libgtest-dev ${{ matrix.cxx }}
     - name: checkout gsl
-      run: test ${{ matrix.gsl }} = "yes" && mkdir -p external && git clone https://github.com/gsl-lite/gsl-lite.git  external/gsl-lite
+      if: matrix.gsl == 'gsl'
+      run: mkdir -p external && git clone https://github.com/gsl-lite/gsl-lite.git  external/gsl-lite
     - name: build tests
       run: make -C test -j$(nproc) CXX=${{ matrix.cxx }} STD=${{ matrix.std }}  
     - name: run tests
