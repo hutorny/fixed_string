@@ -1,0 +1,8 @@
+.cproject
+.project
+.settings/
+/Debug/
+/Release/
+/C++*/
+build/
+/external/

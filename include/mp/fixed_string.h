@@ -26,34 +26,18 @@
 // NOLINTBEGIN(*-avoid-c-arrays)
 #pragma once
 
-#include <mp-units/bits/hacks.h>  // IWYU pragma: keep
-#include <mp-units/bits/module_macros.h>
-#include <mp-units/compat_macros.h>  // IWYU pragma: keep
-#include <mp-units/ext/type_traits.h>
-
-#ifndef MP_UNITS_IN_MODULE_INTERFACE
-#include <mp-units/ext/contracts.h>
-#ifdef MP_UNITS_IMPORT_STD
-import std;
-#else
+#include <mp/compat_macros.h>
+#include <mp/type_traits.h>
 #include <compare>  // IWYU pragma: export
 #include <concepts>
 #include <cstddef>
 #include <cstdlib>
 #include <ranges>
 #include <string_view>
-#endif  // MP_UNITS_IMPORT_STD
 
-#if MP_UNITS_HOSTED
-#include <mp-units/ext/format.h>
-#ifndef MP_UNITS_IMPORT_STD
 #include <ostream>
-#endif
-#endif  // MP_UNITS_HOSTED
-#endif  // MP_UNITS_IN_MODULE_INTERFACE
 
-MP_UNITS_EXPORT
-namespace mp_units {
+namespace mp {
 
 /**
  * @brief A compile-time fixed string
@@ -90,7 +74,7 @@ public:
   // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
   consteval explicit(false) basic_fixed_string(const CharT (&txt)[N + 1]) noexcept
   {
-    MP_UNITS_EXPECTS(txt[N] == CharT{});
+    gsl_Expects(txt[N] == CharT{});
     for (std::size_t i = 0; i < N; ++i) data_[i] = txt[i];
   }
 
@@ -98,18 +82,18 @@ public:
     requires std::convertible_to<std::iter_value_t<It>, CharT>
   constexpr basic_fixed_string(It begin, S end)
   {
-    MP_UNITS_EXPECTS(std::distance(begin, end) == N);
+    gsl_Expects(std::distance(begin, end) == N);
     for (auto it = data_; begin != end; ++begin, ++it) *it = *begin;
   }
-
+#ifdef __cpp_lib_containers_ranges
   template<std::ranges::input_range R>
     requires std::convertible_to<std::ranges::range_reference_t<R>, CharT>
   constexpr basic_fixed_string(std::from_range_t, R&& r)
   {
-    MP_UNITS_EXPECTS(std::ranges::size(r) == N);
+    gsl_Expects(std::ranges::size(r) == N);
     for (auto it = data_; auto&& v : std::forward<R>(r)) *it++ = std::forward<decltype(v)>(v);
   }
-
+#endif
   constexpr basic_fixed_string(const basic_fixed_string&) noexcept = default;
   constexpr basic_fixed_string& operator=(const basic_fixed_string&) noexcept = default;
 
@@ -132,26 +116,24 @@ public:
   // element access
   [[nodiscard]] constexpr const_reference operator[](size_type pos) const
   {
-    MP_UNITS_EXPECTS(pos < N);
+    gsl_Expects(pos < N);
     return data()[pos];
   }
 
-#if MP_UNITS_HOSTED
   [[nodiscard]] constexpr const_reference at(size_type pos) const
   {
     if (pos >= size()) throw std::out_of_range("basic_fixed_string::at");
     return (*this)[pos];
   }
-#endif
 
   [[nodiscard]] constexpr const_reference front() const
   {
-    MP_UNITS_EXPECTS(!empty());
+    gsl_Expects(!empty());
     return (*this)[0];
   }
   [[nodiscard]] constexpr const_reference back() const
   {
-    MP_UNITS_EXPECTS(!empty());
+    gsl_Expects(!empty());
     return (*this)[N - 1];
   }
 
@@ -206,7 +188,7 @@ public:
   [[nodiscard]] consteval friend basic_fixed_string<CharT, N + N2 - 1, Traits> operator+(
     const basic_fixed_string& lhs, const CharT (&rhs)[N2]) noexcept
   {
-    MP_UNITS_EXPECTS(rhs[N2 - 1] == CharT{});
+    gsl_Expects(rhs[N2 - 1] == CharT{});
     CharT txt[N + N2];
     CharT* it = txt;
     for (CharT c : lhs) *it++ = c;
@@ -218,7 +200,7 @@ public:
   [[nodiscard]] consteval friend basic_fixed_string<CharT, N1 + N - 1, Traits> operator+(
     const CharT (&lhs)[N1], const basic_fixed_string& rhs) noexcept
   {
-    MP_UNITS_EXPECTS(lhs[N1 - 1] == CharT{});
+    gsl_Expects(lhs[N1 - 1] == CharT{});
     CharT txt[N1 + N];
     CharT* it = txt;
     for (std::size_t i = 0; i != N1 - 1; ++i) *it++ = lhs[i];
@@ -237,7 +219,7 @@ public:
   template<std::size_t N2>
   [[nodiscard]] friend consteval bool operator==(const basic_fixed_string& lhs, const CharT (&rhs)[N2])
   {
-    MP_UNITS_EXPECTS(rhs[N2 - 1] == CharT{});
+    gsl_Expects(rhs[N2 - 1] == CharT{});
     return lhs.view() == std::basic_string_view<CharT, Traits>(std::cbegin(rhs), std::cend(rhs) - 1);
   }
 
@@ -250,18 +232,16 @@ public:
   template<std::size_t N2>
   [[nodiscard]] friend consteval auto operator<=>(const basic_fixed_string& lhs, const CharT (&rhs)[N2])
   {
-    MP_UNITS_EXPECTS(rhs[N2 - 1] == CharT{});
+    gsl_Expects(rhs[N2 - 1] == CharT{});
     return lhs.view() <=> std::basic_string_view<CharT, Traits>(std::cbegin(rhs), std::cend(rhs) - 1);
   }
 
   // inserters and extractors
-#if MP_UNITS_HOSTED
   friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& os,
                                                        const basic_fixed_string& str)
   {
     return os << str.c_str();
   }
-#endif
 };
 
 // deduction guides
@@ -270,9 +250,10 @@ basic_fixed_string(CharT, Rest...) -> basic_fixed_string<CharT, 1 + sizeof...(Re
 
 template<typename CharT, std::size_t N>
 basic_fixed_string(const CharT (&str)[N]) -> basic_fixed_string<CharT, N - 1>;
-
+#if defined(__cpp_lib_containers_ranges) && (__cpp_lib_containers_ranges >= 202202L)
 template<one_of<char, char8_t, char16_t, char32_t, wchar_t> CharT, std::size_t N>
 basic_fixed_string(std::from_range_t, std::array<CharT, N>) -> basic_fixed_string<CharT, N>;
+#endif
 
 // specialized algorithms
 template<class CharT, std::size_t N, class Traits>
@@ -297,26 +278,14 @@ using fixed_wstring = basic_fixed_string<wchar_t, N>;
 
 // hash support
 template<std::size_t N>
-struct std::hash<mp_units::fixed_string<N>> : std::hash<std::string_view> {};
+struct std::hash<mp::fixed_string<N>> : std::hash<std::string_view> {};
 template<std::size_t N>
-struct std::hash<mp_units::fixed_u8string<N>> : std::hash<std::u8string_view> {};
+struct std::hash<mp::fixed_u8string<N>> : std::hash<std::u8string_view> {};
 template<std::size_t N>
-struct std::hash<mp_units::fixed_u16string<N>> : std::hash<std::u16string_view> {};
+struct std::hash<mp::fixed_u16string<N>> : std::hash<std::u16string_view> {};
 template<std::size_t N>
-struct std::hash<mp_units::fixed_u32string<N>> : std::hash<std::u32string_view> {};
+struct std::hash<mp::fixed_u32string<N>> : std::hash<std::u32string_view> {};
 template<std::size_t N>
-struct std::hash<mp_units::fixed_wstring<N>> : std::hash<std::wstring_view> {};
-
-#if MP_UNITS_HOSTED
-// formatting support
-template<typename CharT, std::size_t N>
-struct MP_UNITS_STD_FMT::formatter<mp_units::basic_fixed_string<CharT, N>> : formatter<std::basic_string_view<CharT>> {
-  template<typename FormatContext>
-  auto format(const mp_units::basic_fixed_string<CharT, N>& str, FormatContext& ctx) const -> decltype(ctx.out())
-  {
-    return formatter<std::basic_string_view<CharT>>::format(std::basic_string_view<CharT>(str), ctx);
-  }
-};
-#endif
+struct std::hash<mp::fixed_wstring<N>> : std::hash<std::wstring_view> {};
 
 // NOLINTEND(*-avoid-c-arrays)

@@ -22,19 +22,10 @@
 
 #pragma once
 
-#include <mp-units/bits/hacks.h>
-#include <mp-units/bits/module_macros.h>
-
-#ifndef MP_UNITS_IN_MODULE_INTERFACE
-#ifdef MP_UNITS_IMPORT_STD
-import std;
-#else
 #include <type_traits>
 #include <utility>
-#endif
-#endif
 
-namespace mp_units {
+namespace mp {
 
 // conditional
 namespace detail {
@@ -53,10 +44,8 @@ struct conditional_impl<true> {
 
 }  // namespace detail
 
-MP_UNITS_EXPORT_BEGIN
-
 template<bool B, typename T, typename F>
-using conditional = detail::conditional_impl<B>::template type<T, F>;
+using conditional = typename detail::conditional_impl<B>::template type<T, F>;
 
 // is_same
 template<class T, class U>
@@ -81,8 +70,6 @@ constexpr bool is_specialization_of_v = false;
 template<auto... Params, template<auto...> typename Type>
 constexpr bool is_specialization_of_v<Type<Params...>, Type> = true;
 
-MP_UNITS_EXPORT_END
-
 // is_derived_from_specialization_of
 namespace detail {
 
@@ -104,7 +91,7 @@ namespace detail {
 
 template<typename T>
 struct get_value_type {
-  using type = T::value_type;
+  using type = typename T::value_type;
 };
 
 template<typename T>
@@ -117,13 +104,13 @@ struct get_element_type {
 template<typename T>
   requires requires { typename T::value_type; } || requires { typename T::element_type; }
 struct wrapped_type {
-  using type =
+  using type = typename
     conditional<requires { typename T::value_type; }, detail::get_value_type<T>, detail::get_element_type<T>>::type;
 };
 
 template<typename T>
   requires requires { typename T::value_type; } || requires { typename T::element_type; }
-using wrapped_type_t = wrapped_type<T>::type;
+using wrapped_type_t = typename wrapped_type<T>::type;
 
 template<typename T>
 struct value_type {
@@ -137,7 +124,7 @@ struct value_type<T> {
 };
 
 template<typename T>
-using value_type_t = value_type<T>::type;
+using value_type_t = typename value_type<T>::type;
 
 template<typename T, typename... Ts>
 concept one_of = (false || ... || std::same_as<T, Ts>);
@@ -145,7 +132,7 @@ concept one_of = (false || ... || std::same_as<T, Ts>);
 template<typename T, auto... Vs>
 [[nodiscard]] consteval bool contains()
 {
-  return (false || ... || is_same_v<MP_UNITS_REMOVE_CONST(decltype(Vs)), T>);
+  return (false || ... || is_same_v<std::remove_const_t<decltype(Vs)>, T>);
 }
 
 template<template<typename...> typename T, typename... Ts>
@@ -169,7 +156,7 @@ template<typename T, std::same_as<T> auto V>
 template<typename T, auto V1, auto V2, auto... Vs>
 [[nodiscard]] consteval auto get()
 {
-  if constexpr (is_same_v<T, MP_UNITS_REMOVE_CONST(decltype(V1))>)
+  if constexpr (is_same_v<T, std::remove_const_t<decltype(V1)>>)
     return V1;
   else
     return get<T, V2, Vs...>();
@@ -214,4 +201,4 @@ concept TagType = std::is_empty_v<T> && std::is_final_v<T>;
 
 }
 
-}  // namespace mp_units
+}  // namespace mp
