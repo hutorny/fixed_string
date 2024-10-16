@@ -20,25 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <mp-units/ext/fixed_string.h>
-#ifdef MP_UNITS_IMPORT_STD
-import std;
-#else
+#include <mp/fixed_string.h>
 #include <array>
 #include <string_view>
-#endif
 
-using namespace mp_units;
+using namespace mp;
 
 namespace {
 
 constexpr std::array array = {'a', 'b', 'c'};
-
+#ifdef __cpp_lib_containers_ranges
 auto from_string = [] {
   std::string_view txt = "abc";
   return fixed_string<3>(std::from_range, txt);
 };
-
+#endif
 auto from_string_iter = [] {
   std::string_view txt = "abc";
   return fixed_string<3>(txt.begin(), txt.end());
@@ -49,8 +45,14 @@ constexpr basic_fixed_string txt1('a');
 constexpr basic_fixed_string txt2('a', 'b', 'c');
 constexpr basic_fixed_string txt3 = "abc";
 constexpr fixed_string<3> txt4(array.begin(), array.end());
+#ifdef __cpp_lib_containers_ranges
 constexpr basic_fixed_string txt5(std::from_range, array);
 constexpr basic_fixed_string txt6(from_string());
+#else
+constexpr basic_fixed_string txt5("abc");
+constexpr basic_fixed_string txt6("abc");
+#endif
+
 constexpr basic_fixed_string txt7(from_string_iter());
 
 constexpr fixed_string<3> txt8(txt2.begin(), txt2.end());
@@ -94,7 +96,6 @@ static_assert(txt9[0] == 'c');
 static_assert(txt9[1] == 'b');
 static_assert(txt9[2] == 'a');
 
-#if MP_UNITS_HOSTED
 static_assert(txt1.at(0) == 'a');
 static_assert(txt2.at(0) == 'a');
 static_assert(txt2.at(1) == 'b');
@@ -102,7 +103,6 @@ static_assert(txt2.at(2) == 'c');
 static_assert(txt9.at(0) == 'c');
 static_assert(txt9.at(1) == 'b');
 static_assert(txt9.at(2) == 'a');
-#endif
 
 static_assert(txt1.front() == 'a');
 static_assert(txt1.back() == 'a');
