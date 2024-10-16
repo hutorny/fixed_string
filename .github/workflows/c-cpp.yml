@@ -11,11 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        std: [c++20, c++23]
-        cxx: [g++-12, clang++-16]
+        std: [c++20]
+        cxx: [g++-11, g++-12, clang++-14, clang++-15]
         include:
           - std: c++2b
+            cxx: clang++-14
+          - std: c++2b
             cxx: clang++-15
+          - std: c++23
+            cxx: g++-12
     steps:
     - uses: actions/checkout@v4
     - name: install dependencies
