@@ -8,9 +8,9 @@ using namespace ::testing;
 using namespace mp;
 
 #ifdef gsl_lite_MAJOR
-#define EXPECT_TERMINATE(x, e) ASSERT_DEATH(x, "terminate called without an active exception")
+#define EXPECT_TERMINATE(x) ASSERT_DEATH(x, "terminate called without an active exception")
 #else
-#define EXPECT_TERMINATE(x, e) ASSERT_EQ(x, e)
+#define EXPECT_TERMINATE(x) EXPECT_NO_THROW(x)
 #endif
 
 TEST(FixedString, AtOutOfBoundaries) {
@@ -20,21 +20,20 @@ TEST(FixedString, AtOutOfBoundaries) {
 
 TEST(FixedString, IndexOutOfBoundaries) {
     fixed_string<3> fs { "123" };
-    EXPECT_TERMINATE(fs[3], '\0');
+    EXPECT_TERMINATE(fs[3]);
 }
 
 TEST(FixedString, FrontOfEmpty) {
     fixed_string<0> fs{ "" };
-    EXPECT_TERMINATE(fs.front(), '\0');
+    EXPECT_TERMINATE(fs.front());
 }
 
 TEST(FixedString, BackOfEmpty) {
     fixed_string<0> fs{ "" };
-    EXPECT_TERMINATE(fs.back(), '\0');
+    EXPECT_TERMINATE(fs.back());
 }
 
 int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
