@@ -27,7 +27,6 @@
 #pragma once
 
 #include <mp/compat_macros.h>
-#include <mp/type_traits.h>
 #include <compare>  // IWYU pragma: export
 #include <concepts>
 #include <cstddef>
@@ -244,13 +243,13 @@ public:
 };
 
 // deduction guides
-template<one_of<char, char8_t, char16_t, char32_t, wchar_t> CharT, std::convertible_to<CharT>... Rest>
+template<typename CharT, std::convertible_to<CharT>... Rest>
 basic_fixed_string(CharT, Rest...) -> basic_fixed_string<CharT, 1 + sizeof...(Rest)>;
 
 template<typename CharT, std::size_t N>
 basic_fixed_string(const CharT (&str)[N]) -> basic_fixed_string<CharT, N - 1>;
 #if defined(__cpp_lib_containers_ranges) && (__cpp_lib_containers_ranges >= 202202L)
-template<one_of<char, char8_t, char16_t, char32_t, wchar_t> CharT, std::size_t N>
+template<typename CharT, std::size_t N>
 basic_fixed_string(std::from_range_t, std::array<CharT, N>) -> basic_fixed_string<CharT, N>;
 #endif
 
